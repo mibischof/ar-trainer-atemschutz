@@ -23,6 +23,7 @@ export const DEFAULTS = {
   camFov: 65,
   markerSize: 15,
   sensorDelay: 60,
+  screenRotation: 'auto',
   quality: 'mittel',
   sound: true,
   debug: false,
@@ -122,10 +123,23 @@ export const SCHEMA = [
   },
   {
     group: 'Kamera & Marker',
+    note: 'Wenn Rauch und Feuer gegenüber dem Kamerabild um 90° gedreht sind, die Bildschirmdrehung von Hand festlegen.',
     items: [
       { key: 'markerSize', label: 'Markergröße (gedruckt)', type: 'range', min: 5, max: 60, step: 0.5, fmt: (v) => `${v} cm` },
       { key: 'camFov', label: 'Kamera-Sichtfeld', type: 'range', min: 40, max: 100, step: 1, fmt: (v) => `${v}°` },
       { key: 'sensorDelay', label: 'Sensor-Verzögerung', type: 'range', min: 0, max: 200, step: 5, fmt: (v) => `${v} ms` },
+      {
+        key: 'screenRotation',
+        label: 'Bildschirmdrehung',
+        type: 'select',
+        options: [
+          ['auto', 'Automatisch'],
+          ['0', '0°'],
+          ['90', '90°'],
+          ['180', '180°'],
+          ['270', '270°'],
+        ],
+      },
       {
         key: 'quality',
         label: 'Grafikqualität',

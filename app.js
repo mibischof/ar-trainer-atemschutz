@@ -668,6 +668,7 @@ function updateDebug(now, eyeH, model, pitch) {
       `Marker im Bild ${tracker ? tracker.lastCount : 0}`,
       `Kamera ${model.vw}×${model.vh}   Sichtfeld ${settings.camFov}°`,
       `Lagesensor ${orientation.hasSensor ? 'ja' : 'nein (Blick per Ziehen)'}`,
+      `Drehung gemeldet ${orientation.reportedAngle}°  Lage ${orientation.gravityAngle ?? '–'}°  genutzt ${orientation.usedAngle}°`,
       `Augenhöhe ${eyeH.toFixed(2)} m (${eyeSrc})`,
       `Blick ${Math.round(pitch / DEG)}°   Hitze ${Math.round(scenario.heat * 100)} %`,
     ];
@@ -704,6 +705,7 @@ function frame(now) {
 
   pollGamepad();
   const model = cameraModel();
+  orientation.override = settings.screenRotation === 'auto' ? null : Number(settings.screenRotation);
   orientation.at(now - settings.sensorDelay, camQ);
   renderer.setView(camQ, model.vfov, model.aspect);
   camDir.set(0, 0, -1).applyQuaternion(camQ);

@@ -52,7 +52,7 @@ Geeignet sind Bluetooth-Seitenumblätterer (für Tablets/Noten) und kleine Bluet
 3. Bei 2 Linsen den **Linsenabstand** so einstellen, dass beide Bilder zu einem verschmelzen.
 4. **Bildgröße** so wählen, dass das Bild das Sichtfeld füllt, ohne dass die Ränder abgeschnitten werden.
 
-Wenn Feuer beim Drehen des Kopfes „nachschwimmen“, die **Sensor-Verzögerung** anpassen (typisch 40–100 ms). Wenn Entfernungen nicht stimmen, das **Kamera-Sichtfeld** anpassen (typisch 60–75°).
+Wenn Feuer beim Drehen des Kopfes „nachschwimmen“, die **Sensor-Verzögerung** anpassen (typisch 40–100 ms). Wenn Entfernungen nicht stimmen, das **Kamera-Sichtfeld** anpassen (typisch 60–75°). Wenn Rauch und Feuer gegenüber dem Kamerabild um 90° gedreht sind, unter Kamera & Marker die **Bildschirmdrehung** von Hand festlegen (im Querformat meist 90° oder 270°).
 
 ## Grenzen des Mockups
 
