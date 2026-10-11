@@ -35,7 +35,8 @@ Der Browser gibt die Kamera nur über **HTTPS** frei. Das Repository ist eine st
 1. Marker drucken: [`marker/AR-Trainer-Marker-A4.pdf`](marker/AR-Trainer-Marker-A4.pdf) (schwarzes Quadrat 15 cm) oder [`marker/AR-Trainer-Marker-A3.pdf`](marker/AR-Trainer-Marker-A3.pdf) (22 cm), oder in der App auf „Marker drucken“ tippen. Mit **100 % Größe** drucken und die Größe in den Einstellungen eintragen.
 2. Marker auslegen: Feuer 1–10 sind Brandstellen, Person 1–2 sind vermisste Personen. Jeden Marker nur einmal verwenden, entweder
    - **flach auf den Boden**: erkennbar bis ca. 3,5 m (A4) bzw. 5 m (A3). Aus der Nähe rutscht der Marker beim Geradeausschauen unten aus dem Bild.
-   - oder **an die Wand**, Mitte in 1,0 m Höhe (unter Einstellungen → Höhe Wandmarker änderbar): erkennbar bis ca. 8 m und auch beim Herangehen im Blick. Feuer bzw. Person erscheint 40 cm vor der Wand am Boden. Die App erkennt selbst, ob ein Marker am Boden liegt oder an der Wand klebt.
+   - oder **senkrecht an die Wand**: erkennbar bis ca. 8 m und auch beim Herangehen im Blick. Das Feuer erscheint direkt am Marker, eine Person liegt am Boden davor. Die App erkennt selbst, ob ein Marker flach liegt oder senkrecht hängt.
+   - Optional (Einstellungen → Kamera & Marker → „Feuer am Boden vor der Wand“): Das Feuer steht dann 40 cm vor der Wand am Boden unter dem Marker. Dafür muss die Höhe der Markermitte eingetragen werden (Standard 1,0 m); die App schätzt daraus auch die Augenhöhe.
 3. **Licht anlassen.** Die App macht die Dunkelheit selbst; im echten Dunkeln findet die Kamera die Marker nicht.
 4. In der App Szenario und Darstellung wählen, „Übung starten“ tippen, Kamera und Bewegungssensor erlauben.
 

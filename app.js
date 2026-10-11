@@ -250,8 +250,9 @@ function settingField(item) {
 
   const changed = () => {
     saveSettings(settings);
-    if (item.key === 'viewMode') {
-      buildViewModes();
+    // Diese Auswahl blendet andere Felder ein oder aus: Formular neu aufbauen.
+    if (['viewMode', 'wallPlacement'].includes(item.key)) {
+      if (item.key === 'viewMode') buildViewModes();
       buildSettings();
       $(id)?.focus();
     }
@@ -483,7 +484,10 @@ function onMarkers(markers, meta) {
         mount = Math.abs(ratio - floorPred) < Math.abs(ratio - wallPred) ? 'floor' : 'wall';
       }
     }
-    scenario.observe(m.id, ray.multiplyScalar(dist), mount, weight, settings.wallHeight);
+    scenario.observe(m.id, ray.multiplyScalar(dist), mount, weight, {
+      wallHeight: settings.wallPlacement === 'floor' ? settings.wallHeight : null,
+      eyeH: settings.eyeMode === 'auto' && scenario.eyeEstimate != null ? scenario.eyeEstimate : settings.eyeHeight,
+    });
   }
 }
 

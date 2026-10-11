@@ -71,7 +71,7 @@
   <div class="tools">
     <h1>Marker für den AR-Trainer</h1>
     <p>Mit <strong>100 % Größe</strong> drucken (nicht „an Seite anpassen“), dann die Kantenlänge des schwarzen Quadrats nachmessen und in der App unter Einstellungen → Markergröße eintragen. Marker nicht knicken.</p>
-    <p><strong>Wo hinlegen?</strong> Flach auf den Boden: gut erkennbar bis ca. 3,5 m (A4) bzw. 5 m (A3). An die Wand geklebt, Mitte in der eingestellten Höhe: erkennbar bis ca. 8 m und auch aus der Nähe gut im Blick. Feuer bzw. Person erscheint dann am Boden vor der Wand.</p>
+    <p><strong>Wo hinlegen?</strong> Flach auf den Boden: gut erkennbar bis ca. 3,5 m (A4) bzw. 5 m (A3). Senkrecht an die Wand geklebt: erkennbar bis ca. 8 m und auch aus der Nähe gut im Blick. Das Feuer erscheint direkt am Marker; in den Einstellungen lässt es sich auch an den Boden vor der Wand stellen.</p>
     <div class="row">
       <label for="paper">Papier <select id="paper"><option value="A4">A4 (bis 15 cm)</option><option value="A3">A3 (bis 22 cm)</option></select></label>
       <label for="size">Kantenlänge <input id="size" type="number" min="5" max="15" step="0.5" value="15"> cm</label>
@@ -95,18 +95,9 @@
     const PAPER = { A4: { w: 210, h: 297, max: 15 }, A3: { w: 297, h: 420, max: 22 } };
     const pageStyle = document.createElement('style');
     document.head.append(pageStyle);
-    // Höhe der Wandmarker aus den App-Einstellungen übernehmen, falls vorhanden.
-    let wallHeight = 1;
-    try {
-      const saved = JSON.parse(localStorage.getItem('ar-trainer-settings-v1') || '{}');
-      if (saved.wallHeight) wallHeight = saved.wallHeight;
-    } catch {
-      // Ohne gespeicherte Einstellungen gilt 1,0 m.
-    }
-    const wallText = `${wallHeight.toFixed(2).replace('.', ',').replace(/0$/, '')} m`;
     const TEXT = {
-      fire: `Brandstelle · flach auf den Boden legen oder an die Wand kleben (Mitte in ${wallText} Höhe)`,
-      person: `Vermisste Person · flach auf den Boden legen oder an die Wand kleben (Mitte in ${wallText} Höhe)`,
+      fire: 'Brandstelle · flach auf den Boden legen oder senkrecht an die Wand kleben',
+      person: 'Vermisste Person · flach auf den Boden legen oder senkrecht an die Wand kleben',
     };
 
     function svgFor(id) {

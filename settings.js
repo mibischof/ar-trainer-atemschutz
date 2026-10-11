@@ -23,6 +23,7 @@ export const DEFAULTS = {
   eyeHeight: 1.6,
   camFov: 65,
   markerSize: 15,
+  wallPlacement: 'marker', // marker = Feuer direkt am Marker, floor = am Boden vor der Wand
   wallHeight: 1.0,
   sensorDelay: 60,
   screenRotation: 'auto',
@@ -127,10 +128,28 @@ export const SCHEMA = [
   },
   {
     group: 'Kamera & Marker',
-    note: 'Marker können flach am Boden liegen oder an der Wand kleben. Bei Wandmarkern erscheint Feuer bzw. Person am Boden davor; die Höhe der Markermitte muss stimmen. Wenn Rauch und Feuer gegenüber dem Kamerabild um 90° gedreht sind, die Bildschirmdrehung von Hand festlegen.',
+    note: 'Marker können flach am Boden liegen oder senkrecht an der Wand kleben. Normal erscheint das Feuer direkt am Marker. Mit „Feuer am Boden vor der Wand“ steht es stattdessen am Boden vor einem Wandmarker; dann muss die Höhe der Markermitte stimmen. Wenn Rauch und Feuer gegenüber dem Kamerabild um 90° gedreht sind, die Bildschirmdrehung von Hand festlegen.',
     items: [
       { key: 'markerSize', label: 'Markergröße (gedruckt)', type: 'range', min: 5, max: 60, step: 0.5, fmt: (v) => `${v} cm` },
-      { key: 'wallHeight', label: 'Höhe Wandmarker (Mitte)', type: 'range', min: 0.3, max: 2, step: 0.05, fmt: (v) => `${v.toFixed(2).replace('.', ',')} m` },
+      {
+        key: 'wallPlacement',
+        label: 'Senkrechte Marker (Wand, Bildschirm)',
+        type: 'select',
+        options: [
+          ['marker', 'Feuer direkt am Marker'],
+          ['floor', 'Feuer am Boden vor der Wand'],
+        ],
+      },
+      {
+        key: 'wallHeight',
+        label: 'Höhe der Markermitte an der Wand',
+        type: 'range',
+        min: 0.3,
+        max: 2,
+        step: 0.05,
+        fmt: (v) => `${v.toFixed(2).replace('.', ',')} m`,
+        show: (s) => s.wallPlacement === 'floor',
+      },
       { key: 'camFov', label: 'Kamera-Sichtfeld', type: 'range', min: 40, max: 100, step: 1, fmt: (v) => `${v}°` },
       { key: 'sensorDelay', label: 'Sensor-Verzögerung', type: 'range', min: 0, max: 200, step: 5, fmt: (v) => `${v} ms` },
       {

@@ -56,8 +56,10 @@ export class Scenario {
 
   // Ein Marker wurde gesehen. center: Markermitte relativ zum Kopf (Welt, m).
   // mount: 'floor', 'wall' oder null (unklar), weight: wie verlässlich diese Einschätzung ist.
-  // wallHeight: Höhe der Mitte von Wandmarkern über dem Boden (m).
-  observe(id, center, mount, weight, wallHeight) {
+  // place.wallHeight: Höhe der Mitte senkrechter Marker über dem Boden (m), wenn Feuer am Boden
+  // vor der Wand erscheinen sollen; sonst null (Feuer direkt am Marker).
+  // place.eyeH: aktuelle Augenhöhe (m), für Personen an senkrechten Markern.
+  observe(id, center, mount, weight, { wallHeight = null, eyeH = 1.6 } = {}) {
     const info = markerById.get(id);
     const dist = center.length();
     if (!info || !(dist > 0.2 && dist < 25)) return;
@@ -69,20 +71,27 @@ export class Scenario {
     const wallVotes = Math.max(-6, Math.min(6, (o ? o.wallVotes : 0) + vote));
     const onWall = wallVotes > 0;
 
-    // Wandmarker: Feuer bzw. Person liegt 40 cm vor der Wand am Boden unter dem Marker.
     const toward = new THREE.Vector3(-center.x, 0, -center.z).normalize();
     let pos;
-    let eye;
-    if (onWall) {
-      pos = new THREE.Vector3(center.x, center.y - wallHeight, center.z).addScaledVector(toward, 0.4);
-      eye = wallHeight - center.y;
-    } else {
+    let eye = null;
+    if (!onWall) {
+      // Marker liegt flach (Boden, Tisch): Objekt sitzt direkt darauf.
       pos = center.clone();
       eye = -center.y;
+    } else if (wallHeight != null) {
+      // Senkrechter Marker in bekannter Höhe: Objekt 40 cm vor der Wand am Boden.
+      pos = new THREE.Vector3(center.x, center.y - wallHeight, center.z).addScaledVector(toward, 0.4);
+      eye = wallHeight - center.y;
+    } else if (info.kind === 'fire') {
+      // Senkrechter Marker (Wand, Bildschirm): Feuer direkt am Marker, knapp davor.
+      pos = center.clone().addScaledVector(toward, 0.05);
+    } else {
+      // Person an senkrechtem Marker: liegt am Boden davor, sonst würde sie schweben.
+      pos = new THREE.Vector3(center.x, -eyeH, center.z).addScaledVector(toward, 0.4);
     }
 
     // Augenhöhe schätzen (stehen, knien, kriechen).
-    if (mount != null && dist < 8 && eye > 0.15 && eye < 2.4) {
+    if (eye != null && mount != null && dist < 8 && eye > 0.15 && eye < 2.4) {
       this.eyeEstimate = this.eyeEstimate == null ? eye : this.eyeEstimate + (eye - this.eyeEstimate) * 0.25;
     }
 
