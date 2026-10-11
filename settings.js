@@ -23,6 +23,7 @@ export const DEFAULTS = {
   eyeHeight: 1.6,
   camFov: 65,
   markerSize: 15,
+  wallHeight: 1.0,
   sensorDelay: 60,
   screenRotation: 'auto',
   nozzle: 'fog', // fog = Sprühstrahl, jet = Vollstrahl
@@ -126,9 +127,10 @@ export const SCHEMA = [
   },
   {
     group: 'Kamera & Marker',
-    note: 'Wenn Rauch und Feuer gegenüber dem Kamerabild um 90° gedreht sind, die Bildschirmdrehung von Hand festlegen.',
+    note: 'Marker können flach am Boden liegen oder an der Wand kleben. Bei Wandmarkern erscheint Feuer bzw. Person am Boden davor; die Höhe der Markermitte muss stimmen. Wenn Rauch und Feuer gegenüber dem Kamerabild um 90° gedreht sind, die Bildschirmdrehung von Hand festlegen.',
     items: [
       { key: 'markerSize', label: 'Markergröße (gedruckt)', type: 'range', min: 5, max: 60, step: 0.5, fmt: (v) => `${v} cm` },
+      { key: 'wallHeight', label: 'Höhe Wandmarker (Mitte)', type: 'range', min: 0.3, max: 2, step: 0.05, fmt: (v) => `${v.toFixed(2).replace('.', ',')} m` },
       { key: 'camFov', label: 'Kamera-Sichtfeld', type: 'range', min: 40, max: 100, step: 1, fmt: (v) => `${v}°` },
       { key: 'sensorDelay', label: 'Sensor-Verzögerung', type: 'range', min: 0, max: 200, step: 5, fmt: (v) => `${v} ms` },
       {

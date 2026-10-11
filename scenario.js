@@ -54,40 +54,59 @@ export class Scenario {
     this.log.push({ t: this.time, text });
   }
 
-  // Ein Marker wurde gesehen: ray = Blickstrahl (Welt), dist = geschätzte Entfernung in m.
-  observe(id, ray, dist) {
+  // Ein Marker wurde gesehen. center: Markermitte relativ zum Kopf (Welt, m).
+  // mount: 'floor', 'wall' oder null (unklar), weight: wie verlässlich diese Einschätzung ist.
+  // wallHeight: Höhe der Mitte von Wandmarkern über dem Boden (m).
+  observe(id, center, mount, weight, wallHeight) {
     const info = markerById.get(id);
+    const dist = center.length();
     if (!info || !(dist > 0.2 && dist < 25)) return;
-    const pos = ray.clone().multiplyScalar(dist);
-
-    // Marker liegen am Boden: daraus die aktuelle Augenhöhe schätzen.
-    if (ray.y < -0.1 && dist < 8) {
-      const h = -pos.y;
-      if (h > 0.15 && h < 2.4) {
-        this.eyeEstimate = this.eyeEstimate == null ? h : this.eyeEstimate + (h - this.eyeEstimate) * 0.25;
-      }
-    }
 
     const list = info.kind === 'fire' ? this.fires : this.persons;
     let o = list.get(id);
+    // Boden oder Wand wird über mehrere Beobachtungen entschieden, damit nichts hin und her springt.
+    const vote = mount === 'wall' ? weight : mount === 'floor' ? -weight : 0;
+    const wallVotes = Math.max(-6, Math.min(6, (o ? o.wallVotes : 0) + vote));
+    const onWall = wallVotes > 0;
+
+    // Wandmarker: Feuer bzw. Person liegt 40 cm vor der Wand am Boden unter dem Marker.
+    const toward = new THREE.Vector3(-center.x, 0, -center.z).normalize();
+    let pos;
+    let eye;
+    if (onWall) {
+      pos = new THREE.Vector3(center.x, center.y - wallHeight, center.z).addScaledVector(toward, 0.4);
+      eye = wallHeight - center.y;
+    } else {
+      pos = center.clone();
+      eye = -center.y;
+    }
+
+    // Augenhöhe schätzen (stehen, knien, kriechen).
+    if (mount != null && dist < 8 && eye > 0.15 && eye < 2.4) {
+      this.eyeEstimate = this.eyeEstimate == null ? eye : this.eyeEstimate + (eye - this.eyeEstimate) * 0.25;
+    }
+
     if (!o) {
-      o = { id, info, pos, lastSeen: this.time, dist };
+      o = { id, info, pos, lastSeen: this.time, dist, wallVotes };
       if (info.kind === 'fire') {
         Object.assign(o, { intensity: 0.45, out: false, cooldown: 0, steam: 0, hit: false });
         this.note(`${info.label} entdeckt`);
       } else {
-        // Person liegt quer zur Blickrichtung beim ersten Sehen.
-        Object.assign(o, { yaw: Math.atan2(ray.x, ray.z), found: false });
+        // Person liegt quer zur Blickrichtung bzw. parallel zur Wand.
+        const yaw = onWall ? Math.atan2(toward.x, toward.z) : Math.atan2(center.x, center.z);
+        Object.assign(o, { yaw, found: false });
       }
       list.set(id, o);
       this.hooks.onNew?.(o);
     } else {
-      o.pos.lerp(pos, 0.35);
+      // Nach dem Gehen ohne Marker im Bild liegt die alte Position weit daneben: schnell nachziehen.
+      o.pos.lerp(pos, o.pos.distanceTo(pos) > 0.6 ? 0.75 : 0.4);
+      o.wallVotes = wallVotes;
     }
     o.lastSeen = this.time;
     o.dist = dist;
 
-    if (info.kind === 'person' && !o.found && dist < 1.6) {
+    if (info.kind === 'person' && !o.found && o.pos.length() < 1.6) {
       o.found = true;
       o.foundAt = this.time;
       this.note(`${info.label} gefunden`);

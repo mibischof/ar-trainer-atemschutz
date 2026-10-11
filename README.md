@@ -32,8 +32,10 @@ Der Browser gibt die Kamera nur über **HTTPS** frei. Das Repository ist eine st
 
 ## Übung vorbereiten
 
-1. Marker drucken: [`marker/AR-Trainer-Marker-A4.pdf`](marker/AR-Trainer-Marker-A4.pdf), oder in der App auf „Marker drucken“ tippen. Auf A4 mit **100 % Größe** drucken. Das schwarze Quadrat ist 15 cm groß.
-2. Marker **flach auf den Boden** legen: Feuer 1–4 sind Brandstellen, Person 1–2 sind vermisste Personen.
+1. Marker drucken: [`marker/AR-Trainer-Marker-A4.pdf`](marker/AR-Trainer-Marker-A4.pdf) (schwarzes Quadrat 15 cm) oder [`marker/AR-Trainer-Marker-A3.pdf`](marker/AR-Trainer-Marker-A3.pdf) (22 cm), oder in der App auf „Marker drucken“ tippen. Mit **100 % Größe** drucken und die Größe in den Einstellungen eintragen.
+2. Marker auslegen: Feuer 1–4 sind Brandstellen, Person 1–2 sind vermisste Personen. Jeden Marker nur einmal verwenden, entweder
+   - **flach auf den Boden**: erkennbar bis ca. 3,5 m (A4) bzw. 5 m (A3). Aus der Nähe rutscht der Marker beim Geradeausschauen unten aus dem Bild.
+   - oder **an die Wand**, Mitte in 1,0 m Höhe (unter Einstellungen → Höhe Wandmarker änderbar): erkennbar bis ca. 8 m und auch beim Herangehen im Blick. Feuer bzw. Person erscheint 40 cm vor der Wand am Boden. Die App erkennt selbst, ob ein Marker am Boden liegt oder an der Wand klebt.
 3. **Licht anlassen.** Die App macht die Dunkelheit selbst; im echten Dunkeln findet die Kamera die Marker nicht.
 4. In der App Szenario und Darstellung wählen, „Übung starten“ tippen, Kamera und Bewegungssensor erlauben.
 
@@ -61,7 +63,7 @@ Wenn Feuer beim Drehen des Kopfes „nachschwimmen“, die **Sensor-Verzögerung
 
 ## Grenzen des Mockups
 
-- Keine echte Raumverfolgung: Feuer sitzen genau auf dem Marker, solange er im Bild ist. Danach hält sie der Lagesensor nur in der Richtung fest, nicht beim Gehen.
+- Keine echte Raumverfolgung: Feuer werden nur neu platziert, solange ihr Marker im Bild ist. Beim Gehen ohne Marker im Bild bleiben sie in der zuletzt erkannten Entfernung und Richtung. Deshalb für große Entfernungen und das Herangehen besser Wandmarker verwenden.
 - Die Augenhöhe (stehen/kriechen) wird nur geschätzt, wenn ein Marker am Boden im Bild ist. Sonst gilt der eingestellte Wert.
 - Rauch kennt die echten Wände nicht. Es wird ein Raum mit einstellbarer Tiefe und Höhe angenommen.
 - Auf schwachen Geräten ruckelt es eher; dann „Grafikqualität: Niedrig“ wählen. Der Rauch wird dann gröber berechnet.

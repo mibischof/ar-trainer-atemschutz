@@ -1,6 +1,6 @@
 import * as THREE from './vendor/three.module.min.js';
 import { Orientation } from './sensors.js';
-import { Tracker, markerCenter, markerEdge } from './tracker.js';
+import { Tracker, markerCenter, markerEdge, markerPose, markerUprightRatio } from './tracker.js';
 import { Scenario, NOZZLES } from './scenario.js';
 import { Renderer } from './render.js';
 import { Hud } from './hud.js';
@@ -445,17 +445,45 @@ function endExercise() {
   showDebrief();
 }
 
+// Wertet erkannte Marker aus. Entfernung über die längste Kante (robust auch bei kleinen Markern),
+// Boden oder Wand über die Flächennormale (große Marker) bzw. das Seitenverhältnis (kleine Marker).
 function onMarkers(markers, meta) {
   if (!state.running || state.paused) return;
   const { f } = cameraModel(meta.vw, meta.vh);
+  const cx = meta.vw / 2;
+  const cy = meta.vh / 2;
   const size = settings.markerSize / 100;
+  const inv = meta.q.clone().invert();
+  const up = new THREE.Vector3(0, 1, 0).applyQuaternion(inv);
+  const upLen = Math.hypot(up.x, up.y) || 1;
   for (const m of markers) {
     const edge = markerEdge(m.corners);
     if (edge < 8) continue;
     const c = markerCenter(m.corners);
-    const ray = new THREE.Vector3((c.x - meta.vw / 2) / f, -(c.y - meta.vh / 2) / f, -1);
+    const ray = new THREE.Vector3((c.x - cx) / f, -(c.y - cy) / f, -1);
     const dist = ((f * size) / edge) * ray.length();
-    scenario.observe(m.id, ray.normalize().applyQuaternion(meta.q), dist);
+    ray.normalize().applyQuaternion(meta.q);
+    let mount = null;
+    let weight = 1;
+    if (edge >= 60) {
+      const pose = markerPose(m.corners, f, cx, cy, size);
+      if (pose) {
+        const n = pose.normal.applyQuaternion(meta.q);
+        if (Math.abs(n.y) < 0.5) mount = 'wall';
+        else if (n.y > 0.75) mount = 'floor';
+        weight = 2;
+      }
+    }
+    if (!mount) {
+      // Bodenmarker erscheinen um sin(Neigung) gestaucht, Wandmarker um cos(Neigung).
+      const ratio = markerUprightRatio(m.corners, up.x / upLen, -up.y / upLen);
+      const floorPred = Math.abs(ray.y);
+      const wallPred = Math.sqrt(1 - ray.y * ray.y);
+      if (Math.abs(floorPred - wallPred) > 0.15) {
+        mount = Math.abs(ratio - floorPred) < Math.abs(ratio - wallPred) ? 'floor' : 'wall';
+      }
+    }
+    scenario.observe(m.id, ray.multiplyScalar(dist), mount, weight, settings.wallHeight);
   }
 }
 

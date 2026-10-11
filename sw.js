@@ -1,6 +1,6 @@
 // Offline-Fähigkeit: Beim ersten Öffnen werden alle Dateien gespeichert.
 // Online wird immer zuerst die neueste Version geladen, offline die gespeicherte.
-const CACHE = 'ar-trainer-v4';
+const CACHE = 'ar-trainer-v5';
 const FILES = [
   './',
   'index.html',
