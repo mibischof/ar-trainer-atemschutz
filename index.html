@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#121519">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="AR-Trainer">
+  <meta name="description" content="Mockup: Atemschutz-Übung mit Smartphone-Kamera, Rauch, Feuer auf Markern und Brillen-Ansicht.">
+  <title>AR-Trainer Atemschutz</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <canvas id="view" aria-label="Übungsansicht"></canvas>
+  <video id="cam" playsinline muted autoplay></video>
+
+  <!-- Start -->
+  <main id="screen-start" class="screen">
+    <div class="wrap">
+      <header class="brand">
+        <svg class="brand-mark" viewBox="0 0 48 48" aria-hidden="true">
+          <rect x="1" y="1" width="46" height="46" rx="11" fill="var(--signal)"/>
+          <path d="M24 8c2 6 9 9 9 18a9 9 0 0 1-18 0c0-5 3-8 5-10 0 3 1 5 3 6-1-6 1-10 1-14z" fill="#fff2df"/>
+          <path d="M24 26c1 3 4 4 4 8a4 4 0 0 1-8 0c0-2 1-3 2-4 0 1 1 2 1 2 0-3 1-4 1-6z" fill="var(--signal)"/>
+        </svg>
+        <div>
+          <h1>AR-Trainer Atemschutz</h1>
+          <p class="sub">Mockup für Kaltübungen · läuft im Browser</p>
+        </div>
+      </header>
+
+      <section class="block" aria-labelledby="h-preset">
+        <h2 id="h-preset"><span class="step">1</span>Szenario wählen</h2>
+        <div id="presets" class="presets" role="radiogroup" aria-labelledby="h-preset"></div>
+      </section>
+
+      <section class="block" aria-labelledby="h-view">
+        <h2 id="h-view"><span class="step">2</span>Darstellung</h2>
+        <div id="view-modes" class="seg" role="radiogroup" aria-labelledby="h-view"></div>
+        <p class="hint" id="view-hint"></p>
+      </section>
+
+      <section class="block" aria-labelledby="h-go">
+        <h2 id="h-go"><span class="step">3</span>Übung starten</h2>
+        <button id="btn-start" class="btn primary big" type="button">Übung starten</button>
+        <p id="start-error" class="error" role="alert" hidden></p>
+        <ul id="checks" class="checks" aria-label="Geräteprüfung"></ul>
+      </section>
+
+      <nav class="links" aria-label="Weitere Seiten">
+        <button id="btn-settings" class="btn" type="button">Einstellungen</button>
+        <a class="btn" href="marker.html">Marker drucken</a>
+      </nav>
+
+      <details class="block help">
+        <summary>So läuft die Übung ab</summary>
+        <ol>
+          <li><strong>Marker vorbereiten:</strong> unter „Marker drucken“ ausdrucken (A4, 100 % Größe) und im Übungsraum <strong>flach auf den Boden</strong> legen. Feuer 1–4 sind Brandstellen, Person 1–2 sind vermisste Personen.</li>
+          <li><strong>Licht anlassen.</strong> Die App macht Dunkelheit und Rauch selbst. Im echten Dunkeln findet die Kamera die Marker nicht.</li>
+          <li>Szenario und Darstellung wählen, „Übung starten“ tippen, Kamera und Bewegungssensor erlauben.</li>
+          <li>Handy in die Brille bzw. den Masken-Adapter stecken. Feuer erscheinen, sobald ihr Marker zum ersten Mal im Bild ist.</li>
+          <li><strong>Bedienung mit Bluetooth-Fernbedienung</strong> (Seitenumblätterer oder kleiner Gamecontroller):
+            <ul>
+              <li>Taste 1 halten (Enter, Leertaste, Pfeil rechts/unten, Bild ab, Controller A): <strong>Wasser marsch</strong></li>
+              <li>Taste 2 (Pfeil links/oben, Bild auf, Controller B): <strong>Sicht frei</strong> ein/aus</li>
+              <li>Tippen auf den Bildschirm: Pause-Menü</li>
+            </ul>
+          </li>
+          <li>Ziel: tief bleiben, Personen finden (näher als ca. 1,5 m), Feuer löschen, heiße Rauchgase mit kurzen Stößen nach oben kühlen.</li>
+        </ol>
+      </details>
+
+      <aside class="safety">
+        <strong>Sicherheit:</strong> Nur für Kaltübungen, nie im Brandcontainer. Ein Ausbilder bleibt immer beim Trupp.
+        Mit „Sicht frei“ oder durch Abnehmen der Brille ist das echte Bild sofort zurück.
+      </aside>
+
+      <p class="foot">Mockup ohne echte Raumverfolgung: Feuer sitzen genau auf dem Marker, solange er im Bild ist. Danach hält sie der Lagesensor ungefähr an ihrer Stelle.</p>
+    </div>
+  </main>
+
+  <!-- Einstellungen -->
+  <section id="screen-settings" class="screen" hidden aria-labelledby="h-settings">
+    <div class="wrap">
+      <header class="bar">
+        <button id="btn-settings-back" class="btn" type="button">Fertig</button>
+        <h1 id="h-settings">Einstellungen</h1>
+      </header>
+      <form id="settings-form" class="settings" autocomplete="off"></form>
+      <button id="btn-reset-settings" class="btn ghost" type="button">Alle Einstellungen zurücksetzen</button>
+    </div>
+  </section>
+
+  <!-- Auswertung -->
+  <section id="screen-debrief" class="screen" hidden aria-labelledby="h-debrief">
+    <div class="wrap">
+      <header class="bar">
+        <h1 id="h-debrief">Auswertung</h1>
+      </header>
+      <p id="debrief-outcome" class="outcome"></p>
+      <dl id="debrief-stats" class="stats"></dl>
+      <h2 class="small-h">Ablauf</h2>
+      <ol id="debrief-log" class="log"></ol>
+      <div class="row">
+        <button id="btn-again" class="btn primary" type="button">Neue Übung</button>
+        <button id="btn-home" class="btn" type="button">Zur Startseite</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Bedienelemente in der Hand-Ansicht -->
+  <div id="run-ui" hidden>
+    <div class="run-top">
+      <span id="run-time" class="pill">0:00</span>
+      <span id="run-status" class="pill subtle">Marker suchen …</span>
+    </div>
+    <div class="run-bottom">
+      <button id="btn-clear" class="btn clear" type="button">Sicht frei</button>
+      <button id="btn-menu" class="btn" type="button">Menü</button>
+      <button id="btn-water" class="water" type="button" aria-label="Wasser (gedrückt halten)">Wasser</button>
+    </div>
+  </div>
+
+  <!-- Pause -->
+  <div id="pause" class="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="h-pause">
+    <div class="panel">
+      <h2 id="h-pause">Übung pausiert</h2>
+      <p class="hint" id="pause-time"></p>
+      <button id="btn-resume" class="btn primary big" type="button">Weiter</button>
+      <button id="btn-toggle-clear" class="btn clear" type="button">Sicht frei einschalten</button>
+      <button id="btn-pause-settings" class="btn" type="button">Einstellungen</button>
+      <button id="btn-end" class="btn danger" type="button">Übung beenden</button>
+    </div>
+  </div>
+
+  <div id="rotate-hint" class="overlay" hidden>
+    <div class="panel"><h2>Bitte quer halten</h2><p class="hint">Für die Brille das Handy im Querformat einsetzen.</p></div>
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

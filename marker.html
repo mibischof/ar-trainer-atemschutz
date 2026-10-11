@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#121519">
+  <title>Marker – AR-Trainer Atemschutz</title>
+  <link rel="icon" href="icons/icon-192.png">
+  <style>
+    /* Bildschirm: dunkle Bedienleiste wie in der App. Druck: nur die weißen A4-Seiten. */
+    :root {
+      --bg: #121519;
+      --surface: #1b2027;
+      --line: #2f3843;
+      --text: #e9edf1;
+      --muted: #9aa5b1;
+      --signal: #d9342b;
+      --font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      color-scheme: dark;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.5 var(--font); }
+    .tools { max-width: 760px; margin: 0 auto; padding: 20px 16px; display: grid; gap: 14px; }
+    h1 { margin: 0; font-size: 1.4rem; text-wrap: balance; }
+    p { margin: 0; color: var(--muted); }
+    .row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .btn { min-height: 46px; padding: 10px 16px; border-radius: 10px; border: 1px solid var(--line); background: #232a33; color: var(--text); font: 600 1rem var(--font); cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; }
+    .btn.primary { background: var(--signal); border-color: var(--signal); color: #fff; }
+    .btn:focus-visible { outline: 3px solid #c6f24e; outline-offset: 2px; }
+    label { display: flex; gap: 8px; align-items: center; color: var(--text); }
+    input[type="number"] { width: 5.5em; min-height: 40px; border-radius: 8px; border: 1px solid var(--line); background: #232a33; color: var(--text); font: inherit; padding: 4px 8px; }
+    .pages { display: grid; gap: 16px; justify-items: center; padding: 0 16px 40px; }
+    .page {
+      width: min(100%, 210mm);
+      aspect-ratio: 210 / 297;
+      background: #fff;
+      color: #111;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      justify-items: center;
+      align-items: center;
+      padding: 12mm 10mm;
+      border-radius: 4px;
+    }
+    .page > div:first-child { text-align: center; }
+    .page h2 { margin: 0; font-size: 34pt; letter-spacing: 0.02em; }
+    .page .kind { font-size: 13pt; color: #444; text-align: center; }
+    .page .code { width: var(--size, 18cm); max-width: 100%; aspect-ratio: 1; }
+    .page .code svg { width: 100%; height: 100%; display: block; shape-rendering: crispEdges; }
+    .page .meta { font-size: 10pt; color: #555; text-align: center; }
+    .page.fire h2 { color: #b3261e; }
+    .page.person h2 { color: #1f3f8a; }
+
+    /* Bildschirm-Modus zum Testen ohne Drucker */
+    .show { position: fixed; inset: 0; background: #fff; display: grid; place-items: center; z-index: 10; }
+    .show .code { width: min(80vmin, 100%); aspect-ratio: 1; }
+    .show .code svg { width: 100%; height: 100%; shape-rendering: crispEdges; }
+    .show .cap { position: fixed; bottom: 12px; left: 0; right: 0; text-align: center; color: #333; font: 600 1.1rem var(--font); }
+
+    @media print {
+      @page { size: A4 portrait; margin: 0; }
+      body { background: #fff; }
+      .tools, .show { display: none !important; }
+      .pages { padding: 0; gap: 0; }
+      .page { width: 210mm; height: 297mm; aspect-ratio: auto; border-radius: 0; break-after: page; }
+      .page .code { max-width: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="tools">
+    <h1>Marker für den AR-Trainer</h1>
+    <p>Auf A4 mit <strong>100 % Größe</strong> drucken (nicht „an Seite anpassen“), dann die Kantenlänge des schwarzen Quadrats nachmessen und in der App unter Einstellungen → Markergröße eintragen. Marker <strong>flach auf den Boden</strong> legen und nicht knicken.</p>
+    <div class="row">
+      <label for="size">Kantenlänge <input id="size" type="number" min="5" max="15" step="0.5" value="15"> cm</label>
+      <button id="btn-print" class="btn primary" type="button">Drucken</button>
+      <button id="btn-show" class="btn" type="button">Am Bildschirm zeigen</button>
+      <a class="btn" href="./">Zurück zur App</a>
+    </div>
+    <p>„Am Bildschirm zeigen“: zum Testen ohne Drucker einen Marker auf einem zweiten Gerät (z. B. Tablet) anzeigen. Tippen wechselt zum nächsten Marker. In der App dann die Kantenlänge am Bildschirm nachmessen und eintragen.</p>
+  </div>
+  <div id="pages" class="pages"></div>
+
+  <script src="vendor/cv.js"></script>
+  <script src="vendor/aruco.js"></script>
+  <script type="module">
+    import { MARKERS, MARKER_DICTIONARY } from './markers.js';
+
+    const dict = new AR.Dictionary(MARKER_DICTIONARY);
+    const pages = document.getElementById('pages');
+    const sizeInput = document.getElementById('size');
+    const TEXT = {
+      fire: 'Brandstelle · flach auf den Boden legen',
+      person: 'Vermisste Person · flach auf den Boden legen',
+    };
+
+    function svgFor(id) {
+      return dict.generateSVG(id).replace('<svg ', '<svg role="img" aria-label="Marker ' + id + '" ');
+    }
+
+    function build() {
+      pages.textContent = '';
+      // Das SVG enthält rundum einen weißen Rand von 1 Feld; die schwarze Fläche soll die eingestellte Größe haben.
+      const cells = dict.markSize + 2;
+      const blackCm = Number(sizeInput.value) || 15;
+      const totalCm = (blackCm * cells) / dict.markSize;
+      for (const m of MARKERS) {
+        const page = document.createElement('section');
+        page.className = `page ${m.kind}`;
+        page.innerHTML = `
+          <div><h2></h2><div class="kind"></div></div>
+          <div class="code" style="--size:${totalCm}cm">${svgFor(m.id)}</div>
+          <div class="meta"></div>`;
+        page.querySelector('h2').textContent = m.label;
+        page.querySelector('.kind').textContent = TEXT[m.kind];
+        page.querySelector('.meta').textContent = `AR-Trainer Atemschutz · Marker-ID ${m.id} · ${MARKER_DICTIONARY} · schwarzes Quadrat ${blackCm} cm`;
+        pages.append(page);
+      }
+    }
+
+    function showOnScreen(index = 0) {
+      const m = MARKERS[index % MARKERS.length];
+      let layer = document.querySelector('.show');
+      if (!layer) {
+        layer = document.createElement('div');
+        layer.className = 'show';
+        layer.addEventListener('click', () => showOnScreen(Number(layer.dataset.i) + 1));
+        document.body.append(layer);
+      }
+      layer.dataset.i = String(index % MARKERS.length);
+      layer.innerHTML = `<div class="code">${svgFor(m.id)}</div><div class="cap"></div>`;
+      layer.querySelector('.cap').textContent = `${m.label} – tippen für den nächsten Marker, Zurück-Taste zum Beenden`;
+    }
+
+    sizeInput.addEventListener('change', build);
+    document.getElementById('btn-print').addEventListener('click', () => window.print());
+    document.getElementById('btn-show').addEventListener('click', () => {
+      history.pushState({ show: true }, '');
+      showOnScreen(0);
+    });
+    window.addEventListener('popstate', () => document.querySelector('.show')?.remove());
+    build();
+  </script>
+</body>
+</html>
