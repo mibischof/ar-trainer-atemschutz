@@ -10,10 +10,11 @@ Es ist ein **Mockup** zum Ausprobieren und Herzeigen. Die spätere Unity-App sol
 - **Feuer auf Markern:** Flammen, Rauchsäule und Feuerschein im Rauch. Die Feuer wachsen, wenn niemand löscht.
 - **Vermisste Personen auf Markern.** Eine Person gilt als gefunden, sobald man näher als ca. 1,5 m herankommt.
 - **Löschen mit Fernbedienung:** Taste halten heißt Wasser marsch. Das Feuer wird kleiner, wenn der Strahl darauf zielt. Der Wasserverbrauch wird mitgezählt.
+- **Vollstrahl oder Sprühstrahl:** Vollstrahl reicht ca. 16 m, muss aber genau treffen (kleiner Ring). Sprühstrahl ist breit (gestrichelter Ring), reicht nur ca. 6 m und kühlt heiße Rauchgase etwa viermal so gut. Wer mit Vollstrahl in die Rauchgase spritzt, bekommt einen Hinweis.
 - **Heiße Rauchgase und Durchzündung:** Bei zu viel Hitze rollen Flammen durch die Rauchschicht, am Ende kommt die Durchzündung. Kurze Stöße nach oben kühlen die Rauchgase.
 - **„Sicht frei“:** schaltet sofort alle Effekte aus und zeigt das echte Kamerabild mit grünem Rand.
 - **Drei Darstellungen:** in der Hand, Brille mit 1 großer Linse, Brille mit 2 Linsen (Cardboard). Für die Brillen wird das Bild vorverzerrt; Linsenabstand und Korrektur sind einstellbar.
-- **Auswertung** nach der Übung: Dauer, gelöschte Feuer, gefundene Personen, Wasser in Litern, kurze und lange Stöße, höchste Rauchgas-Hitze, Ablauf mit Uhrzeit.
+- **Auswertung** nach der Übung: Dauer, gelöschte Feuer, gefundene Personen, Wasser in Litern, Sekunden mit Vollstrahl und Sprühstrahl, kurze und lange Stöße, höchste Rauchgas-Hitze, Ablauf mit Uhrzeit.
 - **Offline-fähig:** Nach dem ersten Öffnen funktioniert die App ohne Internet und lässt sich zum Startbildschirm hinzufügen.
 
 ## App öffnen
@@ -41,6 +42,7 @@ Ohne Drucker: Auf der Marker-Seite „Am Bildschirm zeigen“ wählen, z. B. am 
 |---|---|---|---|
 | Wasser marsch (halten) | Enter, Leertaste, Pfeil rechts/unten, Bild ab | A, R1, R2 | Taste „Wasser“ (Hand-Ansicht) |
 | Sicht frei ein/aus | Pfeil links/oben, Bild auf, Rücktaste | B | Taste „Sicht frei“ |
+| Vollstrahl / Sprühstrahl | V / S, Tab wechselt | X oder Y wechselt | Tasten über „Wasser“ (Hand-Ansicht) oder im Pause-Menü |
 | Pause-Menü | Esc | Start | Tippen auf den Bildschirm (Brillen-Ansicht) |
 
 Geeignet sind Bluetooth-Seitenumblätterer (für Tablets/Noten) und kleine Bluetooth-Gamecontroller. Selfie-Auslöser senden oft nur „Lauter“; das können Web-Apps nicht zuverlässig auslesen.

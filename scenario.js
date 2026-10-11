@@ -2,8 +2,15 @@ import * as THREE from './vendor/three.module.min.js';
 import { markerById } from './markers.js';
 
 const GROWTH = { langsam: 0.6, mittel: 1, schnell: 1.8 };
-const SPRAY_CONE = 6 * (Math.PI / 180);
-const REACH = 12; // m
+const DEG = Math.PI / 180;
+
+// Strahlarten wie am Hohlstrahlrohr. cone: halber Öffnungswinkel, reach in m,
+// rate: Löschwirkung, falloff: Abnahme mit der Entfernung, cooling: Wirkung beim Kühlen der Rauchgase.
+export const NOZZLES = {
+  jet: { label: 'Vollstrahl', cone: 2 * DEG, reach: 16, rate: 0.32, falloff: 0.004, cooling: 0.25 },
+  fog: { label: 'Sprühstrahl', cone: 12 * DEG, reach: 6, rate: 0.3, falloff: 0.05, cooling: 1 },
+};
+
 const UP = new THREE.Vector3(0, 1, 0);
 const HEAT_WARNING = 0.6;
 
@@ -24,6 +31,10 @@ export class Scenario {
     this.heatWarned = false;
     this.water = 0;
     this.sprayTime = 0;
+    this.sprayTimeJet = 0;
+    this.sprayTimeFog = 0;
+    this.jetCooling = 0;
+    this.jetHintShown = false;
     this.pulses = 0;
     this.longSprays = 0;
     this.clearCount = 0;
@@ -77,11 +88,13 @@ export class Scenario {
     }
   }
 
-  // camDir: Blickrichtung (Welt), pitch: Blickneigung in rad (positiv = nach oben).
-  update(dt, { spraying, camDir, pitch, settings }) {
+  // camDir: Blickrichtung (Welt), pitch: Blickneigung in rad (positiv = nach oben),
+  // nozzle: 'jet' (Vollstrahl) oder 'fog' (Sprühstrahl).
+  update(dt, { spraying, nozzle, camDir, pitch, settings }) {
     if (this.flashover) return;
     this.time += dt;
     const g = GROWTH[settings.growth] ?? 1;
+    const n = NOZZLES[nozzle] || NOZZLES.fog;
     let total = 0;
 
     for (const f of this.fires.values()) {
@@ -93,10 +106,10 @@ export class Scenario {
       if (spraying) {
         const center = f.pos.clone().addScaledVector(UP, 0.35 * f.intensity);
         const d = center.length();
-        const radius = Math.atan2(0.25 + 0.45 * f.intensity, d) + SPRAY_CONE;
-        if (d < REACH && camDir.angleTo(center) < radius) {
+        const radius = Math.atan2(0.25 + 0.45 * f.intensity, d) + n.cone;
+        if (d < n.reach && camDir.angleTo(center) < radius) {
           f.hit = true;
-          f.intensity -= (dt * 0.28) / (1 + 0.02 * d * d);
+          f.intensity -= (dt * n.rate) / (1 + n.falloff * d * d);
           f.cooldown = 2.5;
           f.steam = Math.min(1, f.steam + dt * 2);
         }
@@ -119,7 +132,15 @@ export class Scenario {
 
     // Rauchgase heizen sich auf; Wasser nach oben in die Rauchschicht kühlt sie.
     this.heat += dt * 0.0022 * g * total;
-    if (spraying && pitch > 0.26) this.heat -= dt * 0.15;
+    const coolingUp = spraying && pitch > 0.26;
+    if (coolingUp) this.heat -= dt * 0.15 * n.cooling;
+    // Hinweis, wenn mit Vollstrahl in heiße Rauchgase gespritzt wird.
+    if (coolingUp && nozzle === 'jet' && this.heat > 0.45) this.jetCooling += dt;
+    if (this.jetCooling > 1 && !this.jetHintShown) {
+      this.jetHintShown = true;
+      this.note('Rauchgaskühlung mit Vollstrahl versucht');
+      this.hooks.onJetCoolingHint?.();
+    }
     if (total === 0) this.heat -= dt * 0.01;
     this.heat = Math.min(1, Math.max(0, this.heat));
     this.maxHeat = Math.max(this.maxHeat, this.heat);
@@ -140,6 +161,8 @@ export class Scenario {
     if (spraying) {
       this.water += (dt * settings.flow) / 60;
       this.sprayTime += dt;
+      if (nozzle === 'jet') this.sprayTimeJet += dt;
+      else this.sprayTimeFog += dt;
     }
   }
 

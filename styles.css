@@ -202,8 +202,30 @@ h2 { font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.08em; colo
   gap: 8px;
 }
 .run-bottom > * { pointer-events: auto; }
+.nozzle-col { margin-left: auto; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.nozzle {
+  display: grid;
+  border: 1px solid #a9d4ff;
+  border-radius: 10px;
+  overflow: hidden;
+  background: rgba(18, 21, 25, 0.75);
+}
+.nozzle button {
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font: 600 0.92rem/1.2 var(--font);
+  cursor: pointer;
+}
+.nozzle button + button { border-top: 1px solid rgba(169, 212, 255, 0.5); }
+.nozzle button[aria-checked="true"] { background: #a9d4ff; color: #0c1b2b; }
+.nozzle button:focus-visible { outline: 3px solid var(--clear); outline-offset: -3px; }
+.nozzle.wide { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.nozzle.wide button { min-height: 46px; }
+.nozzle.wide button + button { border-top: 0; border-left: 1px solid rgba(169, 212, 255, 0.5); }
 .water {
-  margin-left: auto;
   width: 96px;
   height: 96px;
   border-radius: 50%;

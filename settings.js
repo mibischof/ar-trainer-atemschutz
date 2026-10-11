@@ -24,6 +24,7 @@ export const DEFAULTS = {
   markerSize: 15,
   sensorDelay: 60,
   screenRotation: 'auto',
+  nozzle: 'fog', // fog = Sprühstrahl, jet = Vollstrahl
   quality: 'mittel',
   sound: true,
   debug: false,

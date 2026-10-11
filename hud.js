@@ -14,7 +14,8 @@ export class Hud {
     this.lastKey = key;
     const c = this.ctx;
     c.clearRect(0, 0, w, h);
-    const u = h / 100;
+    // Maßeinheit nach der kürzeren Seite, damit Texte auch hochkant ins Bild passen.
+    const u = Math.min(w, h) / 100;
 
     if (state.grid) this._grid(c, w, h, u);
 
@@ -23,17 +24,31 @@ export class Hud {
       c.strokeStyle = 'rgba(198, 242, 78, 0.95)';
       c.strokeRect(1.5 * u, 1.5 * u, w - 3 * u, h - 3 * u);
       this._label(c, 'SICHT FREI', w / 2, 14 * u, 7 * u, 'rgba(20, 24, 12, 0.85)', '#c6f24e');
-    } else {
-      // Zielmarke des Strahlrohrs.
-      c.lineWidth = 0.45 * u;
-      c.strokeStyle = state.spraying ? 'rgba(160, 210, 255, 0.95)' : 'rgba(255, 255, 255, 0.55)';
+    } else if (state.nozzle) {
+      // Zielmarke des Strahlrohrs: Ring in der Breite des Strahlkegels, darunter die Strahlart.
+      const { coneRadius, label, wide } = state.nozzle;
+      const color = state.spraying ? 'rgba(160, 210, 255, 0.95)' : 'rgba(255, 255, 255, 0.6)';
+      c.strokeStyle = color;
+      c.fillStyle = color;
+      c.lineWidth = 0.4 * u;
       c.beginPath();
-      c.arc(w / 2, h / 2, 2.2 * u, 0, Math.PI * 2);
+      c.arc(w / 2, h / 2, 0.7 * u, 0, Math.PI * 2);
+      c.fill();
+      c.setLineDash(wide ? [1.6 * u, 1.2 * u] : []);
+      c.beginPath();
+      c.arc(w / 2, h / 2, Math.max(2.2 * u, coneRadius), 0, Math.PI * 2);
       c.stroke();
-      if (state.spraying) {
-        c.fillStyle = 'rgba(160, 210, 255, 0.35)';
-        c.fill();
-      }
+      c.setLineDash([]);
+      c.font = `600 ${2.8 * u}px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif`;
+      c.textAlign = 'center';
+      c.textBaseline = 'top';
+      c.fillStyle = 'rgba(0, 0, 0, 0.5)';
+      const tw = c.measureText(label).width;
+      // Bei breitem Kegel bleibt die Beschriftung nahe der Mitte, damit sie in der Brille sichtbar ist.
+      const y = h / 2 + (coneRadius < 8 * u ? Math.max(2.2 * u, coneRadius) : 2.2 * u) + 1.2 * u;
+      c.fillRect(w / 2 - tw / 2 - u, y - 0.4 * u, tw + 2 * u, 3.6 * u);
+      c.fillStyle = color;
+      c.fillText(label, w / 2, y);
     }
 
     if (state.headline) {

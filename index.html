@@ -68,9 +68,11 @@
             <ul>
               <li>Taste 1 halten (Enter, Leertaste, Pfeil rechts/unten, Bild ab, Controller A): <strong>Wasser marsch</strong></li>
               <li>Taste 2 (Pfeil links/oben, Bild auf, Controller B): <strong>Sicht frei</strong> ein/aus</li>
-              <li>Tippen auf den Bildschirm: Pause-Menü</li>
+              <li>Strahlart wechseln: Taste V (Vollstrahl), S (Sprühstrahl) oder Tab, Controller X/Y</li>
+              <li>Tippen auf den Bildschirm: Pause-Menü, dort auch Strahlart wählen</li>
             </ul>
           </li>
+          <li><strong>Strahlart:</strong> Vollstrahl reicht weit, muss aber genau treffen. Sprühstrahl ist breit, reicht nur ca. 6 m und kühlt heiße Rauchgase. Mit Vollstrahl gelingt die Rauchgaskühlung kaum.</li>
           <li>Ziel: tief bleiben, Personen finden (näher als ca. 1,5 m), Feuer löschen, heiße Rauchgase mit kurzen Stößen nach oben kühlen.</li>
         </ol>
       </details>
@@ -122,7 +124,13 @@
     <div class="run-bottom">
       <button id="btn-clear" class="btn clear" type="button">Sicht frei</button>
       <button id="btn-menu" class="btn" type="button">Menü</button>
-      <button id="btn-water" class="water" type="button" aria-label="Wasser (gedrückt halten)">Wasser</button>
+      <div class="nozzle-col">
+        <div class="nozzle" role="radiogroup" aria-label="Strahlart">
+          <button type="button" role="radio" data-nozzle="jet" aria-checked="false">Vollstrahl</button>
+          <button type="button" role="radio" data-nozzle="fog" aria-checked="true">Sprühstrahl</button>
+        </div>
+        <button id="btn-water" class="water" type="button" aria-label="Wasser (gedrückt halten)">Wasser</button>
+      </div>
     </div>
   </div>
 
@@ -132,6 +140,10 @@
       <h2 id="h-pause">Übung pausiert</h2>
       <p class="hint" id="pause-time"></p>
       <button id="btn-resume" class="btn primary big" type="button">Weiter</button>
+      <div class="nozzle wide" role="radiogroup" aria-label="Strahlart">
+        <button type="button" role="radio" data-nozzle="jet" aria-checked="false">Vollstrahl</button>
+        <button type="button" role="radio" data-nozzle="fog" aria-checked="true">Sprühstrahl</button>
+      </div>
       <button id="btn-toggle-clear" class="btn clear" type="button">Sicht frei einschalten</button>
       <button id="btn-pause-settings" class="btn" type="button">Einstellungen</button>
       <button id="btn-end" class="btn danger" type="button">Übung beenden</button>

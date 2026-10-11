@@ -1,7 +1,7 @@
 import * as THREE from './vendor/three.module.min.js';
 import { Orientation } from './sensors.js';
 import { Tracker, markerCenter, markerEdge } from './tracker.js';
-import { Scenario } from './scenario.js';
+import { Scenario, NOZZLES } from './scenario.js';
 import { Renderer } from './render.js';
 import { Hud } from './hud.js';
 import { Sound } from './audio.js';
@@ -13,6 +13,7 @@ const $ = (id) => document.getElementById(id);
 // Fernbedienungen senden je nach Modell unterschiedliche Tasten.
 const PRIMARY_KEYS = new Set(['Enter', 'NumpadEnter', ' ', 'Spacebar', 'ArrowRight', 'ArrowDown', 'PageDown', 'MediaPlayPause', 'AudioVolumeUp', 'AudioVolumeDown']);
 const SECONDARY_KEYS = new Set(['ArrowLeft', 'ArrowUp', 'PageUp', 'Backspace', 'c', 'C']);
+const NOZZLE_KEYS = { v: 'jet', V: 'jet', s: 'fog', S: 'fog' };
 
 // Lange Bildseite für die Marker-Erkennung: größer = Marker aus weiterer Entfernung, aber langsamer.
 const DETECT_SIZE = { niedrig: 640, mittel: 960, hoch: 1280 };
@@ -84,6 +85,9 @@ const scenario = new Scenario({
   onHeatWarning: () => {
     toast('Rauchgase sehr heiß – kühlen!', 'warn', 4);
     sound.beep([300, 300], 0.18, settings.sound);
+  },
+  onJetCoolingHint: () => {
+    toast('Rauchgase mit Sprühstrahl kühlen', 'warn', 4);
   },
   onFlashover: () => {
     state.flashoverAt = performance.now();
@@ -447,6 +451,27 @@ function onMarkers(markers, meta) {
   }
 }
 
+function updateNozzleButtons() {
+  for (const b of document.querySelectorAll('[data-nozzle]')) {
+    b.setAttribute('aria-checked', String(b.dataset.nozzle === settings.nozzle));
+  }
+}
+
+function setNozzle(mode) {
+  if (!NOZZLES[mode] || mode === settings.nozzle) return;
+  settings.nozzle = mode;
+  saveSettings(settings);
+  updateNozzleButtons();
+  if (state.running) {
+    toast(NOZZLES[mode].label, 'info', 1.4);
+    sound.beep(mode === 'jet' ? [700] : [500, 700], 0.07, settings.sound);
+  }
+}
+
+function toggleNozzle() {
+  setNozzle(settings.nozzle === 'jet' ? 'fog' : 'jet');
+}
+
 function toggleClear() {
   if (!state.running) return;
   state.clear = !state.clear;
@@ -496,7 +521,7 @@ function showDebrief() {
     ['Feuer gelöscht', `${out} / ${fires.length}`],
     ['Personen gefunden', `${found} / ${persons.length}`],
     ['Wasserverbrauch', `${Math.round(s.water)} l`],
-    ['Strahlrohr offen', `${Math.round(s.sprayTime)} s`],
+    ['Vollstrahl / Sprühstrahl', `${Math.round(s.sprayTimeJet)} s / ${Math.round(s.sprayTimeFog)} s`],
     ['Kurze Stöße / lange', `${s.pulses} / ${s.longSprays}`],
     ['Höchste Rauchgas-Hitze', `${Math.round(s.maxHeat * 100)} %`],
     ['„Sicht frei“ benutzt', `${s.clearCount}×`],
@@ -544,6 +569,12 @@ window.addEventListener('keydown', (e) => {
   } else if (SECONDARY_KEYS.has(e.key)) {
     if (!e.repeat) toggleClear();
     e.preventDefault();
+  } else if (NOZZLE_KEYS[e.key]) {
+    setNozzle(NOZZLE_KEYS[e.key]);
+    e.preventDefault();
+  } else if (e.key === 'Tab') {
+    if (!e.repeat) toggleNozzle();
+    e.preventDefault();
   }
 });
 
@@ -564,18 +595,22 @@ function pollGamepad() {
   let spray = false;
   let clearBtn = false;
   let menuBtn = false;
+  let nozzleBtn = false;
   for (const p of pads) {
     if (!p) continue;
     const b = (i) => !!(p.buttons[i] && p.buttons[i].pressed);
     spray = spray || b(0) || b(5) || b(7);
     clearBtn = clearBtn || b(1);
     menuBtn = menuBtn || b(9);
+    nozzleBtn = nozzleBtn || b(2) || b(3);
   }
   input.pad = spray;
   if (clearBtn && !input.padPrev.clear && !state.paused) toggleClear();
   if (menuBtn && !input.padPrev.menu) togglePause();
   input.padPrev.clear = clearBtn;
+  if (nozzleBtn && !input.padPrev.nozzle && !state.paused) toggleNozzle();
   input.padPrev.menu = menuBtn;
+  input.padPrev.nozzle = nozzleBtn;
 }
 
 // Tippen öffnet in der Brille das Menü; ohne Sensor dreht Ziehen den Blick.
@@ -620,6 +655,14 @@ waterBtn.addEventListener('pointercancel', waterOff);
 waterBtn.addEventListener('lostpointercapture', waterOff);
 waterBtn.addEventListener('contextmenu', (e) => e.preventDefault());
 
+for (const b of document.querySelectorAll('[data-nozzle]')) {
+  b.addEventListener('click', () => {
+    setNozzle(b.dataset.nozzle);
+    // Fokus abgeben, damit Enter auf der Fernbedienung nicht diese Taste auslöst.
+    if (state.running && !state.paused) b.blur();
+  });
+}
+
 $('btn-start').addEventListener('click', startExercise);
 $('btn-settings').addEventListener('click', () => openSettings('start'));
 $('btn-settings-back').addEventListener('click', closeSettings);
@@ -629,6 +672,7 @@ $('btn-reset-settings').addEventListener('click', () => {
   buildSettings();
   buildPresets();
   buildViewModes();
+  updateNozzleButtons();
   resize();
 });
 $('btn-clear').addEventListener('click', toggleClear);
@@ -723,7 +767,7 @@ function frame(now) {
   state.wasSpraying = spraying;
   state.sprayOpen += ((spraying ? 1 : 0) - state.sprayOpen) * Math.min(1, dt * (spraying ? 14 : 6));
 
-  if (active) scenario.update(dt, { spraying, camDir, pitch, settings });
+  if (active) scenario.update(dt, { spraying, nozzle: settings.nozzle, camDir, pitch, settings });
 
   if (state.flashoverAt) {
     const k = (now - state.flashoverAt) / 1000;
@@ -747,6 +791,7 @@ function frame(now) {
     eyeH,
     clear: state.clear,
     spray: state.sprayOpen,
+    nozzle: settings.nozzle,
     flash: state.flash,
     hasVideo: video.readyState >= 2,
   });
@@ -777,10 +822,16 @@ function frame(now) {
   });
 
   state.toasts = state.toasts.filter((t) => t.until > now);
+  const nozzle = NOZZLES[settings.nozzle] || NOZZLES.fog;
   const hudState = {
     grid: settings.grid,
     clear: state.clear,
     spraying,
+    nozzle: {
+      label: nozzle.label,
+      coneRadius: Math.round(Math.tan(nozzle.cone) * renderer.uPx.value),
+      wide: nozzle === NOZZLES.fog,
+    },
     toasts: state.toasts.map((t) => ({ text: t.text, kind: t.kind })),
     headline: scenario.flashover ? 'DURCHZÜNDUNG – RÜCKZUG!' : null,
     debug: updateDebug(now, eyeH, model, pitch),
@@ -795,6 +846,7 @@ function frame(now) {
 buildPresets();
 buildViewModes();
 buildSettings();
+updateNozzleButtons();
 runChecks();
 resize();
 requestAnimationFrame(frame);

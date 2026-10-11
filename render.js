@@ -254,24 +254,40 @@ void main() {
 `;
 
 // Wasserstrahl aus dem Strahlrohr; liegt im Kamera-Koordinatensystem.
+// Die Form kommt aus SPRAY_SHAPES (Vollstrahl oder Sprühstrahl).
 const SPRAY_VERT = /* glsl */ `
 attribute vec4 aSeed;
 uniform float uTime;
 uniform float uOpen;
 uniform float uPx;
+uniform float uRate;
+uniform float uSpread;
+uniform float uReach;
+uniform float uLift;
+uniform float uDrop;
+uniform float uSize0;
+uniform float uSize1;
+uniform float uAlpha;
+uniform float uFade;
 varying float vA;
 void main() {
-  float life = fract(uTime * 1.4 + aSeed.x);
+  float life = fract(uTime * uRate + aSeed.x);
   float a = aSeed.y * 6.2831853;
-  float r = sqrt(aSeed.z) * 0.22;
-  vec3 dir = normalize(vec3(cos(a) * r, sin(a) * r + 0.04, -1.0));
-  vec3 p = vec3(0.10, -0.22, -0.3) + dir * life * 6.0 + vec3(0.0, -0.4 * life * life, 0.0);
+  float r = sqrt(aSeed.z) * uSpread;
+  vec3 dir = normalize(vec3(cos(a) * r, sin(a) * r + uLift, -1.0));
+  vec3 p = vec3(0.10, -0.22, -0.3) + dir * life * uReach + vec3(0.0, -uDrop * life * life, 0.0);
   vec4 mv = modelViewMatrix * vec4(p, 1.0);
   gl_Position = projectionMatrix * mv;
-  gl_PointSize = clamp((0.015 + 0.18 * life * life) * uPx / max(-mv.z, 0.05), 1.0, 200.0);
-  vA = uOpen * (1.0 - life) * (1.0 - life) * 0.45;
+  gl_PointSize = clamp((uSize0 + uSize1 * life * life) * uPx / max(-mv.z, 0.05), 1.0, 200.0);
+  vA = uOpen * pow(1.0 - life, uFade) * uAlpha;
 }
 `;
+
+// Vollstrahl: dünn, weit, leichter Bogen. Sprühstrahl: breiter Nebelkegel, kurze Reichweite.
+const SPRAY_SHAPES = {
+  jet: { uRate: 1.1, uSpread: 0.025, uReach: 13, uLift: 0.07, uDrop: 1.1, uSize0: 0.018, uSize1: 0.07, uAlpha: 0.8, uFade: 0.8 },
+  fog: { uRate: 1.4, uSpread: 0.3, uReach: 5, uLift: 0.04, uDrop: 0.4, uSize0: 0.015, uSize1: 0.2, uAlpha: 0.45, uFade: 2 },
+};
 
 const SPRAY_FRAG = /* glsl */ `
 uniform float uLight;
@@ -424,7 +440,13 @@ export class Renderer {
 
   _buildSpray() {
     this.sprayMat = new THREE.ShaderMaterial({
-      uniforms: { uTime: this.common.uTime, uOpen: { value: 0 }, uPx: this.uPx, uLight: { value: 1 } },
+      uniforms: {
+        uTime: this.common.uTime,
+        uOpen: { value: 0 },
+        uPx: this.uPx,
+        uLight: { value: 1 },
+        ...Object.fromEntries(Object.entries(SPRAY_SHAPES.fog).map(([k, v]) => [k, { value: v }])),
+      },
       vertexShader: SPRAY_VERT,
       fragmentShader: SPRAY_FRAG,
       transparent: true,
@@ -570,7 +592,7 @@ export class Renderer {
   }
 
   // Überträgt den Übungszustand in die Grafik.
-  sync({ time, scenario, settings, eyeH, clear, spray, flash, hasVideo }) {
+  sync({ time, scenario, settings, eyeH, clear, spray, nozzle, flash, hasVideo }) {
     const u = this.common;
     const lum = 1 - settings.darkness * 0.92;
     u.uTime.value = time;
@@ -586,6 +608,7 @@ export class Renderer {
     this.bgMat.uniforms.uHasVideo.value = hasVideo ? 1 : 0;
     this.sprayMat.uniforms.uOpen.value = clear ? 0 : spray;
     this.sprayMat.uniforms.uLight.value = 0.35 + 0.65 * lum;
+    for (const [k, v] of Object.entries(SPRAY_SHAPES[nozzle] || SPRAY_SHAPES.fog)) this.sprayMat.uniforms[k].value = v;
     this.finalMat.uniforms.uFlash.value = flash;
 
     // Hellste Feuer für Feuerschein und Beleuchtung.
