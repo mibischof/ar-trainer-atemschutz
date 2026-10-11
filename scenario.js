@@ -35,6 +35,13 @@ export class Scenario {
     this.sprayTimeFog = 0;
     this.jetCooling = 0;
     this.jetHintShown = false;
+    // Rauchgaskühlung: Zeitpunkte der Kühlstöße, Anhebung der Rauchschicht (m), Tropfen von der Decke (0..1)
+    this.coolPulses = [];
+    this.coolPulseCount = 0;
+    this.pressCooled = false;
+    this.coolLift = 0;
+    this.drip = 0;
+    this.dripAt = null;
     this.pulses = 0;
     this.longSprays = 0;
     this.clearCount = 0;
@@ -134,6 +141,14 @@ export class Scenario {
     this.heat += dt * 0.0022 * g * total;
     const coolingUp = spraying && pitch > 0.26;
     if (coolingUp) this.heat -= dt * 0.15 * n.cooling;
+    // Gekühlte Rauchgase ziehen sich zusammen, die Schicht hebt sich. Vollstrahl in heiße Gase
+    // stört die Schichtung und drückt den Rauch nach unten.
+    if (coolingUp && nozzle !== 'jet') {
+      this.pressCooled = true;
+      this.coolLift = Math.min(0.45, this.coolLift + dt * 0.12);
+    }
+    if (coolingUp && nozzle === 'jet' && this.heat > 0.3) this.coolLift = Math.max(-0.45, this.coolLift - dt * 0.15);
+    this.coolLift *= Math.exp(-dt / 25);
     // Hinweis, wenn mit Vollstrahl in heiße Rauchgase gespritzt wird.
     if (coolingUp && nozzle === 'jet' && this.heat > 0.45) this.jetCooling += dt;
     if (this.jetCooling > 1 && !this.jetHintShown) {
@@ -158,6 +173,18 @@ export class Scenario {
       this.hooks.onFlashover?.();
     }
 
+    // Wasser tropft von der Decke, wenn nach mehreren Kühlstößen die Rauchgase kühl genug sind
+    // (das Wasser verdampft dann nicht mehr vollständig).
+    this.coolPulses = this.coolPulses.filter((t) => this.time - t < 40);
+    const last = this.coolPulses.length ? this.time - this.coolPulses[this.coolPulses.length - 1] : Infinity;
+    const dripTarget = this.coolPulses.length >= 3 && this.heat < 0.4 && last < 20 ? 1 : 0;
+    this.drip += (dripTarget - this.drip) * Math.min(1, dt * (dripTarget ? 0.6 : 0.12));
+    if (this.drip > 0.5 && this.dripAt == null) {
+      this.dripAt = this.time;
+      this.note('Wasser tropft von der Decke – Rauchgase gekühlt');
+      this.hooks.onDrip?.();
+    }
+
     if (spraying) {
       this.water += (dt * settings.flow) / 60;
       this.sprayTime += dt;
@@ -170,6 +197,17 @@ export class Scenario {
   sprayReleased(duration) {
     if (duration < 1.2) this.pulses++;
     else this.longSprays++;
+    if (this.pressCooled) {
+      this.coolPulses.push(this.time);
+      this.coolPulseCount++;
+    }
+    this.pressCooled = false;
+  }
+
+  // Einzelne Flammenzungen in der Rauchschicht ab mittlerer Hitze.
+  get tongues() {
+    const t = Math.min(1, Math.max(0, (this.heat - 0.3) / 0.25));
+    return t * t * (3 - 2 * t);
   }
 
   get rollover() {

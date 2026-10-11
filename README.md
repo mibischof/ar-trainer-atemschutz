@@ -6,15 +6,18 @@ Es ist ein **Mockup** zum Ausprobieren und Herzeigen. Die spätere Unity-App sol
 
 ## Was das Mockup kann
 
-- **Kamerabild mit Rauchschicht:** Rauch ab einer einstellbaren Höhe über dem Boden, dazu Dunkelheit und leichter Rauch im ganzen Raum. Wer sich duckt, sieht unter dem Rauch mehr.
-- **Feuer auf Markern:** Flammen, Rauchsäule und Feuerschein im Rauch. Die Feuer wachsen, wenn niemand löscht.
+- **Kamerabild mit Rauchschicht:** Die Rauchschicht wird als Volumen berechnet. Sie hat eine wogende Unterkante, Rauchwalzen ziehen unter der Decke, und zur Decke hin wird der Rauch dichter. Dazu kommen Dunkelheit und leichter Rauch im ganzen Raum. Wer sich duckt, sieht unter dem Rauch mehr.
+- **Feuer auf Markern:** ausgefranste, flackernde Flammen, Funkenflug, Rauchsäule und Hitzeflimmern. Boden und Wände rund ums Feuer werden orange beleuchtet, der Rauch von unten angestrahlt. Die Feuer wachsen, wenn niemand löscht.
+- **Flammenzungen in der Rauchschicht:** ab mittlerer Rauchgas-Hitze vereinzelt, kurz vor der Durchzündung rollen sie großflächig unter der Decke.
+- **Rauchgaskühlung:** Jeder Sprühstoß in die Rauchschicht erzeugt eine helle Dampfwolke und Zischen; dort erlöschen die Flammenzungen, und die Schicht hebt sich etwas. Vollstrahl in heiße Rauchgase drückt die Schicht dagegen nach unten. Nach mindestens 3 Kühlstößen bei ausreichend gekühlten Rauchgasen **tropft Wasser von der Decke**, mit Tropfgeräusch, Meldung und Tropfen auf dem Maskenvisier.
 - **Vermisste Personen auf Markern.** Eine Person gilt als gefunden, sobald man näher als ca. 1,5 m herankommt.
 - **Löschen mit Fernbedienung:** Taste halten heißt Wasser marsch. Das Feuer wird kleiner, wenn der Strahl darauf zielt. Der Wasserverbrauch wird mitgezählt.
 - **Vollstrahl oder Sprühstrahl:** Vollstrahl reicht ca. 16 m, muss aber genau treffen (kleiner Ring). Sprühstrahl ist breit (gestrichelter Ring), reicht nur ca. 6 m und kühlt heiße Rauchgase etwa viermal so gut. Wer mit Vollstrahl in die Rauchgase spritzt, bekommt einen Hinweis.
 - **Heiße Rauchgase und Durchzündung:** Bei zu viel Hitze rollen Flammen durch die Rauchschicht, am Ende kommt die Durchzündung. Kurze Stöße nach oben kühlen die Rauchgase.
 - **„Sicht frei“:** schaltet sofort alle Effekte aus und zeigt das echte Kamerabild mit grünem Rand.
 - **Drei Darstellungen:** in der Hand, Brille mit 1 großer Linse, Brille mit 2 Linsen (Cardboard). Für die Brillen wird das Bild vorverzerrt; Linsenabstand und Korrektur sind einstellbar.
-- **Auswertung** nach der Übung: Dauer, gelöschte Feuer, gefundene Personen, Wasser in Litern, Sekunden mit Vollstrahl und Sprühstrahl, kurze und lange Stöße, höchste Rauchgas-Hitze, Ablauf mit Uhrzeit.
+- **Auswertung** nach der Übung: Dauer, gelöschte Feuer, gefundene Personen, Wasser in Litern, Sekunden mit Vollstrahl und Sprühstrahl, kurze und lange Stöße, höchste Rauchgas-Hitze, Kühlstöße in die Rauchschicht, ob und wann Wasser von der Decke getropft ist, Ablauf mit Uhrzeit.
+- **Starthitze:** Unter Einstellungen → Szenario lässt sich festlegen, wie heiß die Rauchgase zu Beginn sind. „Nullsicht“ startet heiß, sodass sofort Flammenzungen zu sehen sind.
 - **Offline-fähig:** Nach dem ersten Öffnen funktioniert die App ohne Internet und lässt sich zum Startbildschirm hinzufügen.
 
 ## App öffnen
@@ -61,7 +64,7 @@ Wenn Feuer beim Drehen des Kopfes „nachschwimmen“, die **Sensor-Verzögerung
 - Keine echte Raumverfolgung: Feuer sitzen genau auf dem Marker, solange er im Bild ist. Danach hält sie der Lagesensor nur in der Richtung fest, nicht beim Gehen.
 - Die Augenhöhe (stehen/kriechen) wird nur geschätzt, wenn ein Marker am Boden im Bild ist. Sonst gilt der eingestellte Wert.
 - Rauch kennt die echten Wände nicht. Es wird ein Raum mit einstellbarer Tiefe und Höhe angenommen.
-- Auf schwachen Geräten ruckelt es eher; dann „Grafikqualität: Niedrig“ wählen.
+- Auf schwachen Geräten ruckelt es eher; dann „Grafikqualität: Niedrig“ wählen. Der Rauch wird dann gröber berechnet.
 - **Nur für Kaltübungen.** Ein Ausbilder bleibt immer beim Trupp.
 
 ## Dateien

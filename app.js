@@ -66,6 +66,10 @@ const state = {
   debugLines: [],
   debugAt: 0,
   uiAt: 0,
+  // Dampfwolken der Rauchgaskühlung und Tropfen auf dem Visier (nur Darstellung)
+  puffs: [],
+  lastPuff: 0,
+  visor: [],
 };
 
 const input = { key: false, touch: false, pad: false, padPrev: {} };
@@ -85,6 +89,9 @@ const scenario = new Scenario({
   onHeatWarning: () => {
     toast('Rauchgase sehr heiß – kühlen!', 'warn', 4);
     sound.beep([300, 300], 0.18, settings.sound);
+  },
+  onDrip: () => {
+    toast('Wasser tropft von der Decke – Rauchgase gekühlt', 'ok', 4);
   },
   onJetCoolingHint: () => {
     toast('Rauchgase mit Sprühstrahl kühlen', 'warn', 4);
@@ -249,7 +256,7 @@ function settingField(item) {
       $(id)?.focus();
     }
     if (['camFov', 'quality'].includes(item.key)) resize();
-    if (['smokeBase', 'smokeDensity', 'haze', 'darkness', 'growth', 'flashover'].includes(item.key)) {
+    if (['smokeBase', 'smokeDensity', 'haze', 'darkness', 'growth', 'flashover', 'startHeat'].includes(item.key)) {
       settings.preset = 'eigene';
       buildPresets();
     }
@@ -405,8 +412,9 @@ async function startExercise() {
   }
 
   scenario.reset();
+  scenario.heat = settings.startHeat || 0;
   renderer.clearObjects();
-  Object.assign(state, { running: true, paused: false, clear: false, flash: 0, flashoverAt: null, doneAnnounced: false, toasts: [] });
+  Object.assign(state, { running: true, paused: false, clear: false, flash: 0, flashoverAt: null, doneAnnounced: false, toasts: [], puffs: [], visor: [] });
   input.key = input.touch = input.pad = false;
   $('btn-toggle-clear').textContent = 'Sicht frei einschalten';
   requestWakeLock();
@@ -524,6 +532,8 @@ function showDebrief() {
     ['Vollstrahl / Sprühstrahl', `${Math.round(s.sprayTimeJet)} s / ${Math.round(s.sprayTimeFog)} s`],
     ['Kurze Stöße / lange', `${s.pulses} / ${s.longSprays}`],
     ['Höchste Rauchgas-Hitze', `${Math.round(s.maxHeat * 100)} %`],
+    ['Kühlstöße in die Rauchschicht', `${s.coolPulseCount}`],
+    ['Wasser von der Decke', s.dripAt != null ? `nach ${fmtTime(s.dripAt)}` : 'nein'],
     ['„Sicht frei“ benutzt', `${s.clearCount}×`],
   ];
   const dl = $('debrief-stats');
@@ -715,6 +725,7 @@ function updateDebug(now, eyeH, model, pitch) {
       `Drehung gemeldet ${orientation.reportedAngle}°  Lage ${orientation.gravityAngle ?? '–'}°  genutzt ${orientation.usedAngle}°`,
       `Augenhöhe ${eyeH.toFixed(2)} m (${eyeSrc})`,
       `Blick ${Math.round(pitch / DEG)}°   Hitze ${Math.round(scenario.heat * 100)} %`,
+      `Rauchschicht ${scenario.coolLift >= 0 ? '+' : ''}${scenario.coolLift.toFixed(2)} m   Tropfen ${Math.round(scenario.drip * 100)} %`,
     ];
   }
   return state.debugLines;
@@ -737,6 +748,45 @@ function updateRunUi(now) {
     status = parts.join(' · ');
   }
   $('run-status').textContent = state.clear ? 'Sicht frei' : status;
+}
+
+// Dampfwolken dort, wo der Strahl in die Rauchschicht trifft, und Tropfen auf dem Maskenvisier.
+function updateSteamAndVisor(now, dt, { spraying, eyeH, smokeBase, pitch }) {
+  const jet = settings.nozzle === 'jet';
+  if (spraying && pitch > 0.2 && settings.smokeDensity > 0.05 && now - state.lastPuff > (jet ? 350 : 180)) {
+    let entry = null;
+    if (eyeH >= smokeBase) entry = 0;
+    else if (camDir.y > 0.02) entry = (smokeBase - eyeH) / camDir.y;
+    if (entry != null) {
+      const dist = Math.min(jet ? 7 : 4.5, Math.max(0.8, entry + (jet ? 1.6 : 0.7) + Math.random() * 0.4));
+      const pos = camDir.clone().multiplyScalar(dist);
+      pos.x += (Math.random() - 0.5) * 0.4;
+      pos.y += (Math.random() - 0.5) * 0.2;
+      pos.z += (Math.random() - 0.5) * 0.4;
+      state.puffs.push({ pos, born: now, life: jet ? 1600 : 2600 });
+      state.lastPuff = now;
+    }
+  }
+  state.puffs = state.puffs.filter((p) => now - p.born < p.life).slice(-6);
+
+  const rate = scenario.drip * 0.6 + (spraying && !jet && pitch > 0.26 ? 0.25 : 0);
+  if (state.visor.length < 8 && Math.random() < rate * dt) {
+    state.visor.push({
+      x: 0.2 + Math.random() * 0.6,
+      y: 0.25 + Math.random() * 0.65,
+      r: 0.018 + Math.random() * 0.03,
+      vy: 0.003 + Math.random() * 0.012,
+      born: now,
+      life: 6000 + Math.random() * 5000,
+      a: 0,
+    });
+  }
+  for (const d of state.visor) {
+    const age = now - d.born;
+    d.y -= d.vy * dt;
+    d.a = Math.min(1, age / 250) * Math.min(1, (d.life - age) / 2000);
+  }
+  state.visor = state.visor.filter((d) => now - d.born < d.life);
 }
 
 function frame(now) {
@@ -784,16 +834,22 @@ function frame(now) {
   }
 
   const eyeH = settings.eyeMode === 'auto' && scenario.eyeEstimate != null ? scenario.eyeEstimate : settings.eyeHeight;
+  const smokeBase = Math.max(0.1, settings.smokeBase + scenario.coolLift);
+  const coolingUp = spraying && pitch > 0.26;
+  updateSteamAndVisor(now, dt, { spraying, eyeH, smokeBase, pitch });
   renderer.sync({
     time: state.clock,
     scenario,
     settings,
     eyeH,
+    smokeBase,
     clear: state.clear,
     spray: state.sprayOpen,
     nozzle: settings.nozzle,
     flash: state.flash,
     hasVideo: video.readyState >= 2,
+    puffs: state.puffs.map((p) => ({ pos: p.pos, age: (now - p.born) / p.life })),
+    visor: state.visor,
   });
 
   // Ton: lautestes Feuer bestimmt die Richtung.
@@ -818,6 +874,9 @@ function frame(now) {
     pan,
     water: state.sprayOpen,
     heat: state.clear ? 0 : scenario.heat,
+    // Je heißer die Rauchgase, desto lauter zischt das verdampfende Wasser.
+    steam: coolingUp && settings.smokeDensity > 0.05 ? (settings.nozzle === 'jet' ? 0.6 : 1) * (0.25 + 0.75 * scenario.heat) : 0,
+    drip: state.clear ? 0 : scenario.drip,
     enabled: audible,
   });
 

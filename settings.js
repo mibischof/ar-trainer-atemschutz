@@ -15,6 +15,7 @@ export const DEFAULTS = {
   darkness: 0.25,
   growth: 'langsam',
   flashover: false,
+  startHeat: 0,
   roomDepth: 4,
   ceiling: 2.6,
   flow: 130,
@@ -34,17 +35,17 @@ export const PRESETS = {
   einstieg: {
     label: 'Einstieg',
     desc: 'Leichter Rauch ab 1,6 m, wenig Dunkelheit, Feuer wachsen langsam.',
-    values: { smokeBase: 1.6, smokeDensity: 0.35, haze: 0.05, darkness: 0.25, growth: 'langsam', flashover: false },
+    values: { smokeBase: 1.6, smokeDensity: 0.35, haze: 0.05, darkness: 0.25, growth: 'langsam', flashover: false, startHeat: 0 },
   },
   wohnung: {
     label: 'Wohnungsbrand',
     desc: 'Rauchschicht ab 1,1 m, dunkel. Tief bleiben, Person suchen, Rauchgase kühlen.',
-    values: { smokeBase: 1.1, smokeDensity: 0.65, haze: 0.15, darkness: 0.55, growth: 'mittel', flashover: true },
+    values: { smokeBase: 1.1, smokeDensity: 0.65, haze: 0.15, darkness: 0.55, growth: 'mittel', flashover: true, startHeat: 0.15 },
   },
   nullsicht: {
     label: 'Nullsicht',
-    desc: 'Rauch bis 0,5 m über dem Boden, fast dunkel. Durchzündung nach wenigen Minuten.',
-    values: { smokeBase: 0.5, smokeDensity: 0.9, haze: 0.35, darkness: 0.8, growth: 'schnell', flashover: true },
+    desc: 'Rauch bis 0,5 m über dem Boden, fast dunkel, Flammenzungen in der Rauchschicht. Sofort Rauchgase kühlen.',
+    values: { smokeBase: 0.5, smokeDensity: 0.9, haze: 0.35, darkness: 0.8, growth: 'schnell', flashover: true, startHeat: 0.45 },
   },
 };
 
@@ -101,6 +102,7 @@ export const SCHEMA = [
         ],
       },
       { key: 'flashover', label: 'Durchzündung möglich', type: 'toggle' },
+      { key: 'startHeat', label: 'Rauchgase zu Beginn heiß', type: 'range', min: 0, max: 0.8, step: 0.05, fmt: pct },
       { key: 'flow', label: 'Durchfluss Strahlrohr', type: 'range', min: 50, max: 400, step: 5, fmt: (v) => `${v} l/min` },
       { key: 'roomDepth', label: 'Abstand zu den Wänden', type: 'range', min: 1.5, max: 10, step: 0.5, fmt: m },
       { key: 'ceiling', label: 'Raumhöhe', type: 'range', min: 2.1, max: 4.5, step: 0.05, fmt: m },

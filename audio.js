@@ -1,4 +1,4 @@
-// Erzeugte Geräusche (keine Audiodateien): Feuer, Knistern, Wasser, Grollen, Signaltöne.
+// Erzeugte Geräusche (keine Audiodateien): Feuer, Knistern, Wasser, Dampf, Tropfen, Grollen, Signaltöne.
 export class Sound {
   constructor() {
     this.ctx = null;
@@ -67,10 +67,14 @@ export class Sound {
     this.rumbleGain = this._gain();
     this._loop(noise, this._filter('lowpass', 140), this.rumbleGain).connect(this.master);
 
+    // Zischen, wenn Wasser in heißen Rauchgasen verdampft
+    this.steamGain = this._gain();
+    this._loop(noise, this._filter('bandpass', 4200, 0.8), this.steamGain).connect(this.master);
+
     this.crackBuf = this._noise(0.06);
   }
 
-  update(dt, { fire, pan, water, heat, enabled }) {
+  update(dt, { fire, pan, water, heat, steam = 0, drip = 0, enabled }) {
     if (!this.ctx) return;
     const t = this.ctx.currentTime;
     const k = enabled ? 1 : 0;
@@ -78,7 +82,26 @@ export class Sound {
     if (this.firePan.pan) this.firePan.pan.setTargetAtTime(pan, t, 0.1);
     this.waterGain.gain.setTargetAtTime(0.35 * water * k, t, 0.05);
     this.rumbleGain.gain.setTargetAtTime(0.7 * heat * heat * k, t, 0.2);
+    this.steamGain.gain.setTargetAtTime(0.45 * steam * k, t, steam > 0 ? 0.03 : 0.25);
     if (k && fire > 0.02 && Math.random() < dt * 25 * fire) this._crack(fire, t);
+    if (k && drip > 0.05 && Math.random() < dt * 4 * drip) this._drop(t);
+  }
+
+  // Leises „Plopp“ eines Tropfens auf dem Boden oder Helm.
+  _drop(t) {
+    const c = this.ctx;
+    const osc = c.createOscillator();
+    osc.type = 'sine';
+    const f0 = 900 + Math.random() * 900;
+    osc.frequency.setValueAtTime(f0, t);
+    osc.frequency.exponentialRampToValueAtTime(f0 * 0.4, t + 0.05);
+    const g = this._gain(0);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.08 + Math.random() * 0.08, t + 0.005);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.07);
+    osc.connect(g).connect(this.master);
+    osc.start(t);
+    osc.stop(t + 0.09);
   }
 
   _crack(level, t) {
